@@ -63,7 +63,12 @@ def _read_diff(args) -> tuple[str, str, str]:
 
 def cmd_doctor(args) -> int:
     st = get_settings(reload=True)
-    st.mock = args.mock
+    # 只允许 --mock 把开关**打开**，不能用它把 MOCK=true 关掉。
+    # 原来的 `st.mock = args.mock` 会在容器里把环境变量设的 MOCK=true
+    # 覆盖回 False，于是 doctor 一边说「真实调用」一边真的发起 API 请求，
+    # 在 OFFLINE 的容器/CI 里既误导又出网。
+    if args.mock:
+        st.mock = True
     print(st.doctor())
     from .retrieval import build_store
 
@@ -91,7 +96,9 @@ def cmd_doctor(args) -> int:
     print(f"  跳过路径      : {len(SKIP_PATH_PARTS)} 种（node_modules、vendor、dist 等）")
     print("")
     print("[LLM 连通性]")
-    if args.mock:
+    # 用 st.mock（已合并 CLI flag 与环境变量 MOCK），不要只看 args.mock，
+    # 否则容器里 MOCK=true 时仍会去打真实网络。
+    if st.mock or st.offline:
         print("  离线替身模式，跳过网络检查。")
     elif not st.llm_ready:
         print("  未配置 API Key，跳过。加 --mock 可离线跑通流程。")
