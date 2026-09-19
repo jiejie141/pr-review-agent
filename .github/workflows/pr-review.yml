@@ -1,0 +1,95 @@
+name: PR Review Agent
+
+# 全流程 CI：先跑测试，测试通过才对 PR 做自动审查。
+# 两个 job 串行（review 依赖 test）—— 测试都不过的代码，没资格谈代码风格。
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 最小权限：读代码 + 写 PR 评论。不要给 contents: write。
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  # 同一个 PR 连续推送时取消上一次，避免旧结果覆盖新结果
+  group: pr-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 运行时零第三方依赖，测试只需要 pytest
+      - name: 安装测试依赖
+        run: python -m pip install --upgrade pip pytest
+
+      - name: 代码可编译性检查
+        run: python -m compileall -q src main.py eval scripts
+
+      - name: 运行测试
+        run: python -m pytest tests -q
+
+      - name: 规则库自检
+        run: python main.py --rules
+
+      - name: 环境自检（离线替身模式）
+        run: python main.py --doctor --mock
+
+      - name: 离线评测（规则召回 + 误报基线）
+        run: python eval/run_eval.py --mode mock
+
+      - name: 上传评测结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: runs/*.json
+          if-no-files-found: ignore
+
+  review:
+    name: 自动代码审查
+    needs: test
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 拉取 PR 的 diff
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python main.py \
+            --pr "${{ github.repository }}#${{ github.event.pull_request.number }}" \
+            --out runs --stem pr-${{ github.event.pull_request.number }} \
+            --post --apply
+
+      - name: 上传审查报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-report
+          path: runs/
+          if-no-files-found: ignore
+
+    env:
+      # 未配置 LLM_API_KEY 时只跑规则库（仍然能挡住 SQL 注入这类硬问题）
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_BASE_URL: ${{ vars.LLM_BASE_URL || 'https://api.deepseek.com/v1' }}
+      LLM_MODEL: ${{ vars.LLM_MODEL || 'deepseek-chat' }}
+      # 写操作默认 dry-run，这里显式放开
+      DRY_RUN: "false"
