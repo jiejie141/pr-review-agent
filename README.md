@@ -179,3 +179,85 @@ pr-review-agent/
 ## License
 
 MIT
+
+---
+
+## 检索后端：三档可切换（新增）
+
+`retrieval.py` 里的 `ConventionStore` 是**纯标准库的 BM25**，它的价值是零依赖、可复现。
+但 BM25 只看词面、不看语义，而规范文档的查询经常是语义查询。
+
+于是加了 `vector_store.py`，提供与 `ConventionStore` **同一个 `Retriever` 协议**的三档实现：
+
+| backend | 说明 | 依赖 |
+| --- | --- | --- |
+| `bm25` | 纯标准库 BM25（**默认**） | 无 |
+| `vector` | 仅 Chroma 向量检索 | `pip install chromadb` |
+| `hybrid` | BM25 + 向量，**RRF 融合** | `pip install chromadb` |
+
+用环境变量切换，`reviewer.py` 一行都不用改：
+
+```bash
+RETRIEVAL_BACKEND=hybrid python main.py --diff examples/demo.patch --mock
+```
+
+### 为什么用 RRF 而不是加权求和
+
+BM25 的分数是无界的（可能 0.3，也可能 30），余弦相似度是 [-1, 1]。直接加权求和要先把
+两路分布拉到同一尺度，反而丢掉了「BM25 认为这条异常匹配」这种信息。
+RRF 只用**排名**，天然规避量纲问题：
+
+```
+score(d) = Σ_r  1 / (k + rank_r(d))        # k = 60
+```
+
+### 两个实现细节
+
+- **Embedding 用确定性哈希向量**（feature hashing + sign hashing + L2 归一化，
+  特征含英文词 / 中文二元组 / 字符级 3-gram）。理由：评测要可复现，真实 embedding API
+  每次调用可能有微小数值差异，而「留出集召回 2/2」这类结论必须跑一百次都一样。
+  需要真语义时实现 `Embedder` 协议接入 bge / text-embedding-3 即可。
+- **向量侧异常自动降级回 BM25**，而不是让整次审查失败。可用性优先。
+
+> 踩过的坑：`chromadb.EphemeralClient()` 每次返回新对象，但**底层内存 store 是共享的**，
+> 所以同名 collection 其实是同一个集合。早期实现用 `inline#0`、`inline#1` 当 id，
+> 第二个实例就会撞上第一个实例的 id —— 而 Chroma 对重复 id 的 add 是**静默忽略**的。
+> 这个 bug 只在同一进程先后建过两个实例时出现，单测单独跑不触发、整包跑才暴露。
+> 修法：id 加实例前缀 + 用 `where={"instance": ...}` 精确过滤。
+> `tests/test_vector_store.py` 里有两条回归测试钉住它。
+
+---
+
+## 服务化：FastAPI（新增）
+
+```bash
+pip install fastapi uvicorn
+uvicorn pagent.api:app --reload --port 8000
+```
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/health` | 健康检查（含 Chroma 可用性） |
+| GET | `/backends` | 可用检索后端 |
+| POST | `/review` | 审查一段 diff |
+| GET | `/openapi.json` | 自动生成的 OpenAPI 文档（`/docs` 有交互界面） |
+
+```bash
+curl -X POST http://127.0.0.1:8000/review   -H 'Content-Type: application/json'   -d '{"diff": "..."}'
+```
+
+API 层默认 `confirm=None`，**敏感操作在服务端一律拒绝**（没有交互式确认的环境里不该放行）。
+
+---
+
+## 容器化（新增）
+
+```bash
+docker build -t pr-review-agent .
+docker run -p 8000:8000 pr-review-agent -m uvicorn pagent.api:app --host 0.0.0.0
+```
+
+因为本项目**运行时零第三方依赖**，镜像里不需要 `pip install` 任何东西 —— 这是零依赖
+设计的一个具体收益。镜像用非 root 用户运行，默认 `MOCK=true OFFLINE=true DRY_RUN=true`。
+
+配合仓库根目录的 `docker-compose.yml` 可与 browser-agent 一起编排。

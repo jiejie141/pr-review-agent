@@ -30,15 +30,23 @@ jobs:
         with:
           python-version: "3.11"
 
-      # 运行时零第三方依赖，测试只需要 pytest
+      # 运行时零第三方依赖；测试需要 pytest，
+      # 另装 chromadb / fastapi 是为了让「向量检索 + RRF 融合 + API 层」的用例真的跑起来
+      # （这些模块本身做了延迟导入，没装时对应用例会 skip，装了才算真验证过）
       - name: 安装测试依赖
-        run: python -m pip install --upgrade pip pytest
+        run: python -m pip install --upgrade pip pytest chromadb fastapi uvicorn httpx
 
       - name: 代码可编译性检查
         run: python -m compileall -q src main.py eval scripts
 
       - name: 运行测试
         run: python -m pytest tests -q
+
+      - name: 三档检索后端冒烟（bm25 / vector / hybrid）
+        run: |
+          python main.py --diff examples/demo.patch --mock --rules-only
+          RETRIEVAL_BACKEND=vector python main.py --diff examples/demo.patch --mock --rules-only
+          RETRIEVAL_BACKEND=hybrid python main.py --diff examples/demo.patch --mock --rules-only
 
       - name: 规则库自检
         run: python main.py --rules

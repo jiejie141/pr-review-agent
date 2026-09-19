@@ -1,0 +1,29 @@
+# 版本控制与 IDE
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Python 产物
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 本地状态：绝不进镜像
+# runs/ 里是每次审查的 trace 与中间产物；.env 里是 API Key。
+runs/
+.env
+.env.local
+*.log
+
+# 开发辅助
+docs/
+eval/
+scripts/
+tests/

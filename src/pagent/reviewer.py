@@ -29,8 +29,9 @@ from .models import (
     Severity,
     SourceKind,
 )
-from .retrieval import ConventionStore, build_store
+from .retrieval import ConventionStore
 from .rules import RuleEngine
+from .vector_store import build_store
 
 SYSTEM_PROMPT = """你是一名资深代码评审者，正在审查一个 Pull Request 的 diff。
 
@@ -215,7 +216,13 @@ class Reviewer:
         if conventions is not None:
             self.store = conventions
         else:
-            self.store = build_store(self.settings.conventions)
+            # 按 settings.retrieval_backend 选检索器：
+            # bm25（默认，零依赖）/ vector（Chroma）/ hybrid（BM25+向量 RRF 融合）。
+            # 三种都满足 Retriever 协议，本文件下面的代码完全不需要分支。
+            self.store = build_store(
+                self.settings.conventions,
+                backend=getattr(self.settings, "retrieval_backend", "bm25"),
+            )
 
     # -- 主流程 ------------------------------------------------------------
     def review(self, diff_text: str, pr_title: str = "", pr_url: str = "") -> ReviewResult:

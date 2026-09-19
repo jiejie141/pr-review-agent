@@ -92,6 +92,12 @@ class Settings:
     # 无行号的意见一律降级为「风险提示」，不作为行内评论发出
     require_line_anchor: bool = True
 
+    # --- 检索后端 ---
+    # bm25   ：纯标准库 BM25（默认，零依赖、可复现）
+    # vector ：Chroma 向量检索
+    # hybrid ：BM25 + 向量，RRF 融合
+    retrieval_backend: str = "bm25"
+
     # --- 运行时（由 CLI 覆盖）---
     mock: bool = False
     dry_run: bool = True
@@ -169,6 +175,17 @@ class Settings:
         lines.append(f"  规范文档      : {len(conv)} 个")
         for c in conv[:5]:
             lines.append(f"    - {c}")
+        lines.append(f"  检索后端      : {self.retrieval_backend}")
+        if self.retrieval_backend in ("vector", "hybrid"):
+            try:
+                import chromadb  # noqa: F401
+
+                lines.append("    Chroma      : 已安装")
+            except ImportError:
+                lines.append(
+                    "    Chroma      : ✗ 未安装（pip install chromadb），"
+                    "运行时会自动退回纯 BM25"
+                )
         lines.append("")
         probs = self.validate(need_llm=not self.mock)
         lines.append("[自检结论]")
@@ -209,6 +226,7 @@ def get_settings(reload: bool = False) -> Settings:
         max_files=_env_int("MAX_FILES", 60),
         min_severity=os.environ.get("MIN_SEVERITY", "low").strip().lower(),
         require_line_anchor=_env_bool("REQUIRE_LINE_ANCHOR", True),
+        retrieval_backend=os.environ.get("RETRIEVAL_BACKEND", "bm25").strip().lower(),
         mock=_env_bool("MOCK", False),
         dry_run=_env_bool("DRY_RUN", True),
         offline=_env_bool("OFFLINE", False),
