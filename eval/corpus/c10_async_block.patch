@@ -1,0 +1,19 @@
+diff --git a/app/async_jobs.py b/app/async_jobs.py
+--- a/app/async_jobs.py
++++ b/app/async_jobs.py
+@@ -7,3 +7,15 @@
+ 
+ def job_count():
+     return 0
++
++
++async def fetch_profile(user_id):
++    resp = requests.get("https://api.example.com/profile/%s" % user_id)
++    return resp.json()
++
++
++def load_all(names):
++    conns = []
++    for name in names:
++        conns.append(sqlite3.connect("app.db"))
++    return conns

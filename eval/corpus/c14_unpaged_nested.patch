@@ -1,0 +1,20 @@
+diff --git a/app/search.py b/app/search.py
+--- a/app/search.py
++++ b/app/search.py
+@@ -7,3 +7,16 @@
+ 
+ def limit_default():
+     return 50
++
++
++def load_everything():
++    return repo.query(User).all()
++
++
++def intersect(items, targets):
++    found = []
++    for item in items:
++        for tag in targets:
++            if item.tag == tag:
++                found.append(item)
++    return found

@@ -1,0 +1,15 @@
+diff --git a/app/auth.py b/app/auth.py
+--- a/app/auth.py
++++ b/app/auth.py
+@@ -7,3 +7,11 @@
+ 
+ def current_user():
+     return None
++
++
++def fetch_profile(url):
++    return requests.get(url, verify=False).json()
++
++
++def hash_password(password):
++    return hashlib.md5(password.encode()).hexdigest()

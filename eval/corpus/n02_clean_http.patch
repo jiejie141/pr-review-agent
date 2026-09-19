@@ -1,0 +1,15 @@
+diff --git a/app/http_client.py b/app/http_client.py
+--- a/app/http_client.py
++++ b/app/http_client.py
+@@ -7,3 +7,11 @@
+ 
+ def ready():
+     return True
++
++
++def fetch(url, timeout=5):
++    try:
++        return requests.get(url, timeout=timeout).json()
++    except requests.Timeout:
++        logger.warning("upstream timeout: %s", url)
++        return None

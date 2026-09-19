@@ -1,0 +1,14 @@
+diff --git a/app/service.py b/app/service.py
+--- a/app/service.py
++++ b/app/service.py
+@@ -7,3 +7,10 @@
+ 
+ def noop():
+     return None
++
++
++def normalize(name: str | None) -> str:
++    if name is None:
++        logger.debug("empty name, fallback applied")
++        return "anonymous"
++    return name.strip().lower()

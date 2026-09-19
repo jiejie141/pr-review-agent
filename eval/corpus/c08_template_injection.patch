@@ -1,0 +1,11 @@
+diff --git a/app/views.py b/app/views.py
+--- a/app/views.py
++++ b/app/views.py
+@@ -7,3 +7,7 @@
+ 
+ def index():
+     return 'ok'
++
++
++def preview(user_tpl, name):
++    return render_template_string(user_tpl, name=name)

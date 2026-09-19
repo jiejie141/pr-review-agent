@@ -1,0 +1,21 @@
+diff --git a/app/orders.py b/app/orders.py
+--- a/app/orders.py
++++ b/app/orders.py
+@@ -7,3 +7,17 @@
+ 
+ def order_count():
+     return 0
++
++
++def load_users(user_ids):
++    rows = []
++    for uid in user_ids:
++        rows.append(repo.query(User).get(uid))
++    return rows
++
++
++def join_names(rows):
++    out = ""
++    for row in rows:
++        out += str(row) + "\n"
++    return out

@@ -1,0 +1,23 @@
+diff --git a/app/tags.py b/app/tags.py
+--- a/app/tags.py
++++ b/app/tags.py
+@@ -7,3 +7,19 @@
+ 
+ def tag_count():
+     return 0
++
++
++def add_tag(name, tags=[]):
++    tags.append(name)
++    return tags
++
++
++def owner_of(user):
++    if user.name == None:
++        return 'anonymous'
++    return user.name
++
++
++def read_config(path):
++    fh = open(path)
++    return fh.read()

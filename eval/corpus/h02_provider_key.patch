@@ -1,0 +1,8 @@
+diff --git a/app/settings.py b/app/settings.py
+--- a/app/settings.py
++++ b/app/settings.py
+@@ -6,3 +6,4 @@
+ 
+ 
+ TIMEOUT = 30
++OPENAI_API_KEY = "sk-proj-AbCdEfGhIjKlMnOpQrStUvWxYz0123456789"

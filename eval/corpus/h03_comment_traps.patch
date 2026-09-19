@@ -1,0 +1,15 @@
+diff --git a/app/notes.py b/app/notes.py
+--- a/app/notes.py
++++ b/app/notes.py
+@@ -7,3 +7,11 @@
+ 
+ def noop():
+     return None
++
++
++def safe_copy(src, dst):
++    # 不要用 os.system(cmd) 去拷贝，会有命令注入
++    # 也不要写 requests.get(url, verify=False)
++    # 更不要图省事用 eval(expr) 解析配置
++    with open(src, "rb") as f_in, open(dst, "wb") as f_out:
++        f_out.write(f_in.read())

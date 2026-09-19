@@ -1,0 +1,14 @@
+diff --git a/app/legacy.py b/app/legacy.py
+--- a/app/legacy.py
++++ b/app/legacy.py
+@@ -7,3 +7,10 @@
+ 
+ def health():
+     return True
++
++
++def query_by_id(conn, user_id):
++    cur = conn.cursor()
++    cur.execute("SELECT * FROM users WHERE id = {}".format(user_id))
++    # 历史遗留：这里以前用 pickle.loads 反序列化过用户数据，已移除
++    return cur.fetchone()

@@ -1,0 +1,13 @@
+diff --git a/app/validators.py b/app/validators.py
+--- a/app/validators.py
++++ b/app/validators.py
+@@ -7,3 +7,9 @@
+ 
+ def ok():
+     return True
++
++
++def withdraw(user_id, amount):
++    assert amount > 0, "amount must be positive"
++    # TODO: 补上余额校验
++    return amount

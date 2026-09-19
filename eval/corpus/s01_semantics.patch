@@ -1,0 +1,16 @@
+diff --git a/app/payments.py b/app/payments.py
+--- a/app/payments.py
++++ b/app/payments.py
+@@ -7,3 +7,12 @@
+ 
+ def ping():
+     return 'pong'
++
++
++def process(order_id, amount):
++    order = repo.get_order(order_id)
++    order.amount = amount
++    repo.save(order)
++    ledger.insert(order_id, amount)
++    requests.post(callback_url, json=order.payload)
++    return order

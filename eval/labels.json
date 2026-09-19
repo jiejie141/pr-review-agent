@@ -1,0 +1,313 @@
+{
+  "generated_by": "eval/build_corpus.py",
+  "rules_covered": [
+    "CONV301",
+    "CONV302",
+    "CONV303",
+    "CONV304",
+    "CONV305",
+    "CONV306",
+    "CONV307",
+    "CONV308",
+    "PERF201",
+    "PERF202",
+    "PERF203",
+    "PERF204",
+    "PERF205",
+    "PERF206",
+    "SEC101",
+    "SEC102",
+    "SEC103",
+    "SEC104",
+    "SEC105",
+    "SEC106",
+    "SEC107",
+    "SEC108",
+    "SEC109",
+    "SEC110",
+    "SEC111",
+    "SEC112",
+    "SEC113",
+    "SEC114"
+  ],
+  "cases": [
+    {
+      "id": "c01_sql_and_secret",
+      "title": "SQL 注入 + 硬编码凭据",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC101",
+        "SEC103"
+      ],
+      "expect_semantic": [],
+      "note": "拼接 SQL 的两种常见写法都覆盖：+ 拼接与 % 格式化。",
+      "patch": "eval/corpus/c01_sql_and_secret.patch"
+    },
+    {
+      "id": "c02_command_injection",
+      "title": "命令注入 + 调试打印残留",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC102",
+        "CONV303"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c02_command_injection.patch"
+    },
+    {
+      "id": "c03_deserialization",
+      "title": "不安全反序列化 + 动态执行",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC105",
+        "SEC104"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c03_deserialization.patch"
+    },
+    {
+      "id": "c04_tls_and_hash",
+      "title": "关闭 TLS 校验 + 弱哈希存口令",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC106",
+        "SEC107"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c04_tls_and_hash.patch"
+    },
+    {
+      "id": "c05_ssrf_and_path",
+      "title": "SSRF + 路径穿越",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC108",
+        "SEC109"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c05_ssrf_and_path.patch"
+    },
+    {
+      "id": "c06_debug_and_log",
+      "title": "生产开启调试 + 敏感信息入日志",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC110",
+        "SEC111"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c06_debug_and_log.patch"
+    },
+    {
+      "id": "c07_jwt_and_cors",
+      "title": "JWT 未校验签名 + CORS 通配凭据",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC112",
+        "SEC113"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c07_jwt_and_cors.patch"
+    },
+    {
+      "id": "c08_template_injection",
+      "title": "服务端模板注入",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "SEC114"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c08_template_injection.patch"
+    },
+    {
+      "id": "c09_n_plus_one",
+      "title": "循环内查库（N+1）+ 循环内拼字符串",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "PERF201",
+        "PERF203"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c09_n_plus_one.patch"
+    },
+    {
+      "id": "c10_async_block",
+      "title": "异步中同步阻塞 + 循环内建连接",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "PERF202",
+        "PERF205"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c10_async_block.patch"
+    },
+    {
+      "id": "c14_unpaged_nested",
+      "title": "未分页全量加载 + 嵌套循环线性查找",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "PERF204",
+        "PERF206"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c14_unpaged_nested.patch"
+    },
+    {
+      "id": "c11_exception",
+      "title": "裸 except + 静默吞异常",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "CONV302",
+        "CONV301"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c11_exception.patch"
+    },
+    {
+      "id": "c12_defaults_and_files",
+      "title": "可变默认参数 + == None + 文件句柄未关闭",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "CONV305",
+        "CONV306",
+        "CONV308"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c12_defaults_and_files.patch"
+    },
+    {
+      "id": "c13_assert_and_todo",
+      "title": "用 assert 做输入校验 + 遗留 TODO",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [
+        "CONV307",
+        "CONV304"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/c13_assert_and_todo.patch"
+    },
+    {
+      "id": "s01_semantics",
+      "title": "事务边界缺失 + 超时缺失 + 参数未校验",
+      "negative": false,
+      "heldout": false,
+      "expect_rules": [],
+      "expect_semantic": [
+        "多处写操作之间没有事务边界，中途失败会留下半截数据",
+        "外部回调请求没有超时与异常处理",
+        "order_id / amount 未做边界校验"
+      ],
+      "note": "这些缺陷语法完全合法，正则抓不到；用来衡量模型的语义理解能力。",
+      "patch": "eval/corpus/s01_semantics.patch"
+    },
+    {
+      "id": "n01_clean_query",
+      "title": "干净：参数化查询 + with 管理句柄",
+      "negative": true,
+      "heldout": false,
+      "expect_rules": [],
+      "expect_semantic": [],
+      "note": "参数化查询 + with open，都不应命中任何规则。",
+      "patch": "eval/corpus/n01_clean_query.patch"
+    },
+    {
+      "id": "n02_clean_http",
+      "title": "干净：带超时的外部调用 + 显式异常处理",
+      "negative": true,
+      "heldout": false,
+      "expect_rules": [],
+      "expect_semantic": [],
+      "note": "显式 timeout + 捕获后记录日志，不应误报「缺少超时处理」。",
+      "patch": "eval/corpus/n02_clean_http.patch"
+    },
+    {
+      "id": "n03_clean_style",
+      "title": "干净：类型标注 + is None + 日志",
+      "negative": true,
+      "heldout": false,
+      "expect_rules": [],
+      "expect_semantic": [],
+      "note": "is None 判断 + logger 而非 print，不应误报。",
+      "patch": "eval/corpus/n03_clean_style.patch"
+    },
+    {
+      "id": "h01_format_sql",
+      "title": "[留出] .format() 拼 SQL + 注释里埋反例说明",
+      "negative": false,
+      "heldout": true,
+      "expect_rules": [
+        "SEC101"
+      ],
+      "expect_semantic": [],
+      "note": "注释里提到 pickle.loads 只是说明历史问题，不应触发 SEC105。",
+      "patch": "eval/corpus/h01_format_sql.patch"
+    },
+    {
+      "id": "h02_provider_key",
+      "title": "[留出] 硬编码第三方 API Key",
+      "negative": false,
+      "heldout": true,
+      "expect_rules": [
+        "SEC103"
+      ],
+      "expect_semantic": [],
+      "note": "",
+      "patch": "eval/corpus/h02_provider_key.patch"
+    },
+    {
+      "id": "h03_comment_traps",
+      "title": "[留出] 全是注释陷阱：注释里写了危险写法，代码本身干净",
+      "negative": true,
+      "heldout": true,
+      "expect_rules": [],
+      "expect_semantic": [],
+      "note": "注释里出现 os.system / verify=False / eval，都不应触发规则。这是注释守卫的关键测试。",
+      "patch": "eval/corpus/h03_comment_traps.patch"
+    },
+    {
+      "id": "h04_clean_subprocess",
+      "title": "[留出] 干净：列表参数调用外部命令 + 带超时的请求",
+      "negative": true,
+      "heldout": true,
+      "expect_rules": [],
+      "expect_semantic": [],
+      "note": "subprocess 没用 shell=True、requests 带了 timeout 且有异常处理，都不应误报。",
+      "patch": "eval/corpus/h04_clean_subprocess.patch"
+    }
+  ],
+  "summary": {
+    "cases": 22,
+    "negative_cases": 5,
+    "heldout_cases": 4,
+    "tuned_cases": 18,
+    "expected_rule_hits": 30,
+    "expected_semantic_hits": 3
+  }
+}

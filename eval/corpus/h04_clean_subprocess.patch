@@ -1,0 +1,19 @@
+diff --git a/app/tools.py b/app/tools.py
+--- a/app/tools.py
++++ b/app/tools.py
+@@ -7,3 +7,15 @@
+ 
+ def ready():
+     return True
++
++
++def list_dir(path):
++    return subprocess.run(["ls", "-l", path], capture_output=True, check=False)
++
++
++def notify(url, payload):
++    try:
++        return requests.post(url, json=payload, timeout=3).status_code
++    except requests.RequestException:
++        logger.warning("notify failed: %s", url)
++        return 0

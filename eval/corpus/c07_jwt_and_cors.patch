@@ -1,0 +1,17 @@
+diff --git a/app/api.py b/app/api.py
+--- a/app/api.py
++++ b/app/api.py
+@@ -7,3 +7,13 @@
+ 
+ def routes():
+     return []
++
++
++def parse_token(token):
++    return jwt.decode(token, options={"verify_signature": False})
++
++
++def setup_cors(app):
++    allow_origins = ["*"]
++    allow_credentials = True
++    return allow_origins, allow_credentials

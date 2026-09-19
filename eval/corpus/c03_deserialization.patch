@@ -1,0 +1,15 @@
+diff --git a/app/cache.py b/app/cache.py
+--- a/app/cache.py
++++ b/app/cache.py
+@@ -7,3 +7,11 @@
+ 
+ def key_of(name):
+     return name
++
++
++def load_blob(raw):
++    return pickle.loads(raw)
++
++
++def run_rule(expr, ctx):
++    return eval(expr, {}, ctx)

@@ -1,0 +1,15 @@
+diff --git a/app/files.py b/app/files.py
+--- a/app/files.py
++++ b/app/files.py
+@@ -10,3 +10,11 @@
+ 
+ def ping():
+     return 'pong'
++
++
++def proxy(callback_url):
++    return requests.get(callback_url).content
++
++
++def read_upload(filename):
++    return open(os.path.join(BASE_DIR, filename)).read()

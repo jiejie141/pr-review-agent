@@ -1,0 +1,18 @@
+diff --git a/app/safe_db.py b/app/safe_db.py
+--- a/app/safe_db.py
++++ b/app/safe_db.py
+@@ -7,3 +7,14 @@
+ 
+ def health():
+     return True
++
++
++def find_user(conn, username):
++    cur = conn.cursor()
++    cur.execute("SELECT * FROM users WHERE name = ?", (username,))
++    return cur.fetchone()
++
++
++def read_text(path):
++    with open(path, "r", encoding="utf-8") as fh:
++        return fh.read()

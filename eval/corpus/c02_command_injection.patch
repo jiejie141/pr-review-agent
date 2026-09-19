@@ -1,0 +1,14 @@
+diff --git a/app/report.py b/app/report.py
+--- a/app/report.py
++++ b/app/report.py
+@@ -7,3 +7,10 @@
+ 
+ def build(name):
+     return name
++
++
++def render_report(name):
++    cmd = "convert %s /tmp/out.pdf" % name
++    os.system(cmd)
++    print("rendered:", name)
++    return cmd

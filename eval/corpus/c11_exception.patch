@@ -1,0 +1,21 @@
+diff --git a/app/parsing.py b/app/parsing.py
+--- a/app/parsing.py
++++ b/app/parsing.py
+@@ -5,5 +5,15 @@
+ logger = logging.getLogger(__name__)
+ 
+ 
+-def parse_count(raw):
+-    return int(raw)
++def parse_count_safe(raw):
++    try:
++        return int(raw)
++    except:
++        return 0
++
++
++def lookup(mapping, key):
++    try:
++        return mapping[key]
++    except KeyError:
++        pass
