@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pr-review-agent · 审查控制台</title>
+<style>
+/* ------------------------------------------------------------------
+   深色科技感主题 —— 与 browser-agent 控制台共用同一套设计令牌，
+   两个项目并排演示时观感统一。改主题只动 :root。
+------------------------------------------------------------------ */
+:root{
+  --bg:#080b12; --panel:#0e131d; --panel-2:#131a26;
+  --line:#1e2836; --line-2:#2a3648;
+  --fg:#e6edf7; --fg-2:#93a1b8; --fg-3:#5d6b82;
+  --cyan:#22d3ee; --violet:#7c8cff;
+  --amber:#fbbf24; --green:#34d399; --red:#f87171; --orange:#fb923c;
+  --glow:0 0 0 1px rgba(34,211,238,.25), 0 0 24px -6px rgba(34,211,238,.45);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--sans);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased; min-height:100vh;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(34,211,238,.10), transparent 62%),
+    radial-gradient(760px 380px at 92% -4%, rgba(124,140,255,.10), transparent 60%),
+    linear-gradient(rgba(255,255,255,.017) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, rgba(255,255,255,.017) 1px, transparent 1px) 0 0/34px 100%;
+}
+.wrap{position:relative; z-index:1; max-width:1220px; margin:0 auto; padding:26px 22px 64px}
+
+header{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:22px}
+.logo{
+  width:34px;height:34px;border-radius:9px;flex:none;
+  background:linear-gradient(140deg,var(--cyan),var(--violet));
+  display:grid;place-items:center; color:#06121a; font-weight:800; font-size:16px;
+  box-shadow:0 0 22px -4px rgba(34,211,238,.6);
+}
+h1{font-size:18px; margin:0; letter-spacing:.2px}
+h1 small{display:block; font-size:11.5px; color:var(--fg-3); font-weight:400; letter-spacing:.6px}
+.spacer{flex:1}
+.pill{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px;
+  font-size:11.5px; border:1px solid var(--line-2); color:var(--fg-2);
+  background:var(--panel); font-family:var(--mono);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--fg-3);flex:none}
+.dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
+.dot.bad{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,0)),var(--panel);
+  border:1px solid var(--line); border-radius:14px; padding:18px 18px 16px;
+}
+.card + .card{margin-top:16px}
+.card h2{
+  font-size:12px; margin:0 0 14px; letter-spacing:1.3px; text-transform:uppercase;
+  color:var(--fg-3); font-weight:600; display:flex; align-items:center; gap:9px;
+}
+.card h2::before{
+  content:""; width:3px; height:12px; border-radius:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--violet));
+}
+.grid{display:grid; grid-template-columns:1fr 300px; gap:14px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+label{display:block; font-size:11.5px; color:var(--fg-3); margin:0 0 6px; letter-spacing:.4px}
+input,textarea,select,button{font-family:inherit; font-size:13px}
+input[type=text],textarea,select{
+  width:100%; background:#0a0f17; color:var(--fg); border:1px solid var(--line-2);
+  border-radius:9px; padding:10px 12px; outline:none; transition:border-color .15s, box-shadow .15s;
+}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--cyan); box-shadow:var(--glow)}
+textarea{resize:vertical; min-height:210px; line-height:1.55; font-family:var(--mono); font-size:12px}
+.row{display:flex; gap:12px; flex-wrap:wrap}
+.row > .f{flex:1; min-width:120px}
+.f{margin-bottom:13px}
+.hint{font-size:11px; color:var(--fg-3); margin-top:5px}
+.hint.warn{color:var(--amber)}
+.btn{border:1px solid transparent; border-radius:9px; padding:10px 18px; font-weight:600; cursor:pointer; transition:.15s; letter-spacing:.3px}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--violet)); color:#06121a; box-shadow:0 4px 20px -6px rgba(34,211,238,.7)}
+.btn-primary:hover{filter:brightness(1.1); transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.45; cursor:not-allowed; transform:none; filter:none}
+.chk{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--fg-2); cursor:pointer}
+.chk input{accent-color:var(--cyan); width:15px; height:15px}
+
+/* ---------- 结果 ---------- */
+.result{margin-top:16px; border-top:1px solid var(--line); padding-top:16px; display:none}
+.result.show{display:block}
+.summary{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:15px}
+.badge{padding:5px 13px; border-radius:999px; font-size:12px; font-weight:700; font-family:var(--mono); letter-spacing:.5px}
+.badge.block{background:rgba(248,113,113,.14); color:var(--red); border:1px solid rgba(248,113,113,.35)}
+.badge.pass{background:rgba(52,211,153,.14); color:var(--green); border:1px solid rgba(52,211,153,.35)}
+.badge.none{background:rgba(147,161,184,.12); color:var(--fg-2); border:1px solid var(--line-2)}
+.metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:10px; margin-bottom:17px}
+.metric{background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; text-align:center}
+.metric b{display:block; font-size:19px; font-family:var(--mono); line-height:1.25}
+.metric span{font-size:10.5px; color:var(--fg-3); letter-spacing:.5px}
+.metric.hi b{color:var(--red)} .metric.mid b{color:var(--orange)} .metric.lo b{color:var(--amber)}
+.metric.all b{color:var(--cyan)}
+
+/* 问题条目 */
+.finding{
+  border:1px solid var(--line); border-left:3px solid var(--fg-3);
+  border-radius:10px; padding:12px 14px; margin-bottom:10px; background:var(--panel-2);
+  transition:border-color .15s;
+}
+.finding:hover{border-color:var(--line-2)}
+.finding.high{border-left-color:var(--red)}
+.finding.medium{border-left-color:var(--orange)}
+.finding.low{border-left-color:var(--amber)}
+.finding .top{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:5px}
+.sev{
+  font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:.6px;
+  padding:2px 8px; border-radius:5px;
+}
+.sev.high{background:rgba(248,113,113,.15); color:var(--red)}
+.sev.medium{background:rgba(251,146,60,.15); color:var(--orange)}
+.sev.low{background:rgba(251,191,36,.15); color:var(--amber)}
+.rid{font-family:var(--mono); font-size:11.5px; color:var(--violet)}
+.ftitle{font-size:13.5px; font-weight:600; color:var(--fg)}
+.loc{font-family:var(--mono); font-size:11.5px; color:var(--cyan); margin-left:auto}
+.ev{
+  font-family:var(--mono); font-size:11.5px; color:var(--fg-2); background:#0a0f17;
+  border:1px solid var(--line); border-radius:7px; padding:8px 10px; margin:8px 0;
+  white-space:pre-wrap; word-break:break-all; max-height:120px; overflow:auto;
+}
+.sug{font-size:12.5px; color:var(--fg-2); line-height:1.65}
+.sug b{color:var(--cyan); font-weight:600}
+.tags{display:flex; gap:6px; margin-top:8px; flex-wrap:wrap}
+.tag{
+  font-size:10.5px; font-family:var(--mono); padding:2px 7px; border-radius:5px;
+  background:rgba(124,140,255,.12); color:var(--violet); border:1px solid rgba(124,140,255,.25);
+}
+.empty{text-align:center; color:var(--fg-3); padding:26px 0; font-size:12.5px}
+.err{background:rgba(248,113,113,.09); border:1px solid rgba(248,113,113,.32); color:#fca5a5; border-radius:9px; padding:11px 13px; font-size:12.5px; white-space:pre-wrap; word-break:break-word}
+.spin{display:inline-block; width:11px;height:11px; border-radius:50%; border:2px solid rgba(34,211,238,.3); border-top-color:var(--cyan); animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+footer{margin-top:26px; text-align:center; font-size:11.5px; color:var(--fg-3)}
+footer a{color:var(--fg-2); text-decoration:none; border-bottom:1px dotted var(--line-2)}
+footer a:hover{color:var(--cyan)}
+code{font-family:var(--mono); font-size:11.5px; background:var(--panel-2); padding:1.5px 5px; border-radius:5px; color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">P</div>
+    <div>
+      <h1>pr-review-agent
+        <small>28 条确定性规则 + LLM 语义层 · PR 审查控制台</small>
+      </h1>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="hp"><span class="dot" id="hd"></span><span id="ht">连接中…</span></span>
+  </header>
+
+  <div class="card">
+    <h2>审查 diff</h2>
+    <div class="grid">
+      <div>
+        <div class="f">
+          <label for="diff">unified diff 文本</label>
+          <textarea id="diff" placeholder="粘贴 git diff / PR patch 的 unified diff 内容，例如：
+diff --git a/app.py b/app.py
+--- a/app.py
++++ b/app.py
+@@ -1,3 +1,4 @@
++import os
++def f(name):
++    return db.execute(&quot;SELECT * FROM users WHERE name='&quot; + name + &quot;'&quot;)"></textarea>
+          <div class="hint">按行锚定：模型报出的行号必须落在新增行内，否则丢弃并计入幻觉统计。</div>
+        </div>
+      </div>
+      <div>
+        <div class="f">
+          <label for="title">PR 标题（可选）</label>
+          <input type="text" id="title" placeholder="例：新增用户查询接口">
+        </div>
+        <div class="f">
+          <label for="backend">检索后端</label>
+          <select id="backend"></select>
+        </div>
+        <div class="f">
+          <label for="mode">审查模式</label>
+          <!--
+            这里刻意用三态下拉，而不是原来那两个勾选框。
+            原来的 `离线替身` + `启用 LLM 语义层` 是**相乘**关系：
+            两个都勾上（正是默认值）会真的去调云端模型并计费，
+            而"离线替身"四个字让人以为不会。语义层的开启由"模式"决定，
+            不要再把它拆成两个布尔让使用者自己拼。
+          -->
+          <select id="mode" title="rules=只跑规则层，零网络；mock=规则层+离线替身语义层，零网络；live=调用真实模型，会产生费用">
+            <option value="rules">仅规则层（零网络 / 零 token）</option>
+            <option value="mock" selected>规则 + 离线替身语义层（零网络 / 零 token）</option>
+            <option value="live">规则 + 真实模型（走网络，会产生费用）</option>
+          </select>
+        </div>
+        <div class="hint" id="modenote"></div>
+        <button class="btn btn-primary" id="go" style="width:100%">🔍 开始审查</button>
+      </div>
+    </div>
+
+    <div class="result" id="res">
+      <div class="summary" id="sum"></div>
+      <div id="err"></div>
+      <div class="metrics" id="mets" style="display:none"></div>
+      <div id="findings"></div>
+    </div>
+  </div>
+
+  <footer>
+    接口文档 <a href="/docs" target="_blank">/docs</a> ·
+    <a href="/health" target="_blank">/health</a> ·
+    <a href="/backends" target="_blank">/backends</a>
+  </footer>
+</div>
+
+<script>
+/* 零依赖：只用 fetch + 原生 DOM。与 browser-agent 控制台保持同一套写法。 */
+const $ = s => document.querySelector(s);
+const api = (p, o) => fetch(p, o).then(async r => {
+  const t = await r.text();
+  let j; try { j = t ? JSON.parse(t) : {}; } catch { j = {detail: t}; }
+  if (!r.ok) throw new Error(j.detail || ('HTTP ' + r.status));
+  return j;
+});
+const SEV = {high:'高', medium:'中', low:'低'};
+const CAT = {security:'安全', performance:'性能', convention:'规范'};
+const MODE_NOTE = {
+  rules: '只跑 28 条确定性规则，不发任何网络请求。',
+  mock : '规则层 + 内置离线替身语义层，不发任何网络请求；指标里的 token 是估算值，仅用于验证链路。',
+  live : '会调用真实模型：需要配置 LLM_API_KEY，且产生网络请求与费用。',
+};
+
+function syncMode(){
+  const m = $('#mode').value;
+  const live = m === 'live';
+  const opt = $('#mode').querySelector('option[value="live"]');
+  // 没配 Key 时把 live 选项直接禁掉，避免"选了却 400"这种可预防的来回。
+  opt.disabled = !LLM_READY;
+  if(live && !LLM_READY){ $('#mode').value = 'mock'; }
+  $('#modenote').textContent = MODE_NOTE[$('#mode').value];
+  $('#modenote').className = 'hint' + ($('#mode').value === 'live' ? ' warn' : '');
+  $('#go').textContent = $('#mode').value === 'live' ? '🔍 开始审查（真实调用）' : '🔍 开始审查';
+}
+let LLM_READY = false;
+
+async function boot(){
+  try{
+    const h = await api('/health');
+    $('#hd').className = 'dot ok'; $('#ht').textContent = '在线';
+    LLM_READY = !!h.llm_configured;
+    // 默认落在 mock：既能看到语义层链路，又保证零网络、零费用。
+    // 之前这里在"未配置 Key"时把语义层关掉、却把"离线替身"勾上，
+    // 结果默认组合反而变成了真实付费调用 —— 默认值必须是最安全的那个。
+    $('#mode').value = 'mock';
+    const b = await api('/backends');
+    const sel = $('#backend');
+    b.available.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = v + (v === b.default ? '（默认）' : '');
+      o.title = (b.notes && b.notes[v]) || '';
+      sel.appendChild(o);
+    });
+    sel.value = b.default;
+  }catch(e){
+    $('#hd').className = 'dot bad'; $('#ht').textContent = '离线';
+  }
+  syncMode();
+}
+
+$('#mode').onchange = syncMode;
+
+$('#go').onclick = async () => {
+  const diff = $('#diff').value.trim();
+  if(!diff){ alert('请粘贴 diff 内容'); return; }
+  const body = {
+    diff,
+    pr_title: $('#title').value.trim(),
+    mode: $('#mode').value,
+  };
+  const b = $('#backend').value; if(b) body.retrieval_backend = b;
+
+  const go = $('#go');
+  go.disabled = true; go.textContent = '审查中…';
+  $('#res').classList.add('show');
+  $('#err').innerHTML = ''; $('#findings').innerHTML = '';
+  $('#mets').style.display = 'none';
+  $('#sum').innerHTML = '<span class="badge none"><span class="spin"></span> 审查中</span>';
+  try{
+    const r = await api('/review', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    render(r);
+  }catch(e){
+    $('#sum').innerHTML = '<span class="badge none">失败</span>';
+    $('#err').innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+  }finally{
+    go.disabled = false; go.textContent = '🔍 开始审查';
+  }
+};
+
+function render(r){
+  const fs = r.findings || [];
+  // 规则与模型的合并结果：按严重级别从高到低展示，同级按文件名/行号
+  const order = {high:0, medium:1, low:2};
+  const list = fs.slice().sort((a, b) =>
+    (order[a.severity] ?? 9) - (order[b.severity] ?? 9)
+    || String(a.file).localeCompare(String(b.file))
+    || (a.line || 0) - (b.line || 0));
+
+  const nHigh = list.filter(f => f.severity === 'high').length;
+  const nMid  = list.filter(f => f.severity === 'medium').length;
+  const nLow  = list.filter(f => f.severity === 'low').length;
+
+  const blocked = nHigh > 0;
+  $('#sum').innerHTML =
+    `<span class="badge ${blocked ? 'block' : (list.length ? 'pass' : 'none')}">`
+    + (blocked ? '阻断合并' : (list.length ? '可合并' : '未发现问题')) + '</span>'
+    + `<span class="pill">共 ${list.length} 条</span>`
+    + (r.pr_title ? `<span class="pill">${esc(r.pr_title)}</span>` : '');
+
+  if(r.errors && r.errors.length){
+    $('#err').innerHTML = '<div class="err">' + r.errors.map(esc).join('\n') + '</div>';
+  }
+
+  const st = r.stats || {};
+  const mode = st.mode || 'rules';
+  const MODE_TAG = {rules:'仅规则层', mock:'规则+离线替身', live:'规则+真实模型'};
+  // stats 是后端 dataclass 转出来的 dict，字段名以实际为准；
+  // 缺失就显示 0 而不是 'undefined'，避免把"没这项"和"值为空"混起来。
+  const cells = [
+    ['高', nHigh, 'hi'], ['中', nMid, 'mid'], ['低', nLow, 'lo'], ['合计', list.length, 'all'],
+  ];
+  const extra = [['模式', MODE_TAG[mode] || mode, 'all']];
+  if(st.files != null) extra.push(['文件', st.files, 'all']);
+  if(st.added_lines != null) extra.push(['新增行', st.added_lines, 'all']);
+  if(st.llm_calls != null) extra.push(['模型调用', st.llm_calls, 'all']);
+  if(st.total_tokens != null) {
+    // 离线替身的 token 是按字符估出来的，不是真实用量。
+    // 直接标成 "Token" 会被读成"这次花了多少钱"，所以标明估算性质。
+    extra.push(['Token' + (mode === 'live' ? '' : '（估算）'), st.total_tokens, 'all']);
+  }
+  $('#mets').style.display = '';
+  $('#mets').innerHTML = cells.concat(extra).map(([k, v, c]) =>
+    `<div class="metric ${c}"><b>${esc(String(v ?? 0))}</b><span>${k}</span></div>`).join('');
+
+  if(!list.length){
+    $('#findings').innerHTML = '<div class="empty">没有命中任何问题。</div>';
+    return;
+  }
+  $('#findings').innerHTML = list.map(f => {
+    const sev = f.severity || 'low';
+    const src = f.source === 'rule' ? '规则' : (f.source === 'llm' ? '模型' : f.source || '-');
+    return `<div class="finding ${esc(sev)}">
+      <div class="top">
+        <span class="sev ${esc(sev)}">${esc(SEV[sev] || sev)}</span>
+        <span class="rid">${esc(f.rule_id || '')}</span>
+        <span class="ftitle">${esc(f.title || '')}</span>
+        <span class="loc">${esc(f.file || '')}${f.line != null ? ':' + f.line : ''}</span>
+      </div>
+      ${f.evidence ? '<div class="ev">' + esc(f.evidence) + '</div>' : ''}
+      ${f.suggestion ? '<div class="sug"><b>建议：</b>' + esc(f.suggestion) + '</div>' : ''}
+      <div class="tags">
+        <span class="tag">${esc(CAT[f.category] || f.category || '')}</span>
+        <span class="tag">来源 ${esc(src)}</span>
+        ${f.anchors_ok ? '<span class="tag">行号锚定 ✓</span>' : ''}
+        ${f.corroborated ? '<span class="tag">规则+模型互证</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+boot();
+</script>
+</body>
+</html>
