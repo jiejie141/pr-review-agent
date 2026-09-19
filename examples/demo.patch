@@ -1,0 +1,75 @@
+diff --git a/app/orders.py b/app/orders.py
+--- a/app/orders.py
++++ b/app/orders.py
+@@ -7,3 +7,25 @@
+ 
+ def order_count():
+     return 0
++
++
++def load_orders(user_ids):
++    rows = []
++    for uid in user_ids:
++        rows.append(repo.query(Order).get(uid))
++    return rows
++
++
++def render(rows):
++    out = ""
++    for row in rows:
++        out += str(row) + "\n"
++    return out
++
++
++def process(order_id, amount):
++    order = repo.get_order(order_id)
++    repo.save(order)
++    ledger.insert(order_id, amount)
++    requests.post(callback_url, json=order.payload)
++    return order
+diff --git a/app/api.py b/app/api.py
+--- a/app/api.py
++++ b/app/api.py
+@@ -7,3 +7,17 @@
+ 
+ def routes():
+     return []
++
++
++def find_user(conn, username):
++    cur = conn.cursor()
++    cur.execute("SELECT * FROM users WHERE name = '" + username + "'")
++    return cur.fetchone()
++
++
++def parse_token(token):
++    return jwt.decode(token, options={"verify_signature": False})
++
++
++def main():
++    app.run(host="0.0.0.0", debug=True)
+diff --git a/app/legacy.py b/app/legacy.py
+--- a/app/legacy.py
++++ b/app/legacy.py
+@@ -7,3 +7,21 @@
+ 
+ def health():
+     return True
++
++
++def parse_count(raw):
++    try:
++        return int(raw)
++    except:
++        return 0
++
++
++def add_tag(name, tags=[]):
++    tags.append(name)
++    return tags
++
++
++def safe_read(path):
++    # 注意：不要用 os.system(cat) 去读文件，会有命令注入风险
++    with open(path, "r", encoding="utf-8") as fh:
++        return fh.read()
