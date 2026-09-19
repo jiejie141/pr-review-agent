@@ -261,3 +261,15 @@ docker run -p 8000:8000 pr-review-agent -m uvicorn pagent.api:app --host 0.0.0.0
 设计的一个具体收益。镜像用非 root 用户运行，默认 `MOCK=true OFFLINE=true DRY_RUN=true`。
 
 配合仓库根目录的 `docker-compose.yml` 可与 browser-agent 一起编排。
+
+### 构建踩过的坑：`doctor` 忽略环境变量
+
+`cmd_doctor` 里原来写的是 `st.mock = args.mock`，这行会把环境变量读进来的
+`MOCK=true` **覆盖回 `False`**（因为容器里没人传 `--mock` 这个 CLI 参数）。
+后果是：容器自检一边显示「模式：真实调用」，一边真的向 LLM 发了一次请求 ——
+在声称 `OFFLINE` 的镜像里既误导又出网。`[LLM 连通性]` 那一段同理，原来判断的是
+`args.mock` 而不是合并后的 `st.mock`。
+
+现在两处都改成「只允许 `--mock` 把开关打开，不允许关掉」，与 `cmd_review` 里
+既有的写法保持一致。这个坑的通用形态值得记：**当同一个开关既有 CLI flag 又有
+环境变量两个来源时，赋值前先想清楚谁覆盖谁。**
