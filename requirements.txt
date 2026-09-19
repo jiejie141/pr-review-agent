@@ -1,0 +1,4 @@
+# 运行时零第三方依赖 —— 全部使用标准库实现。
+# 这一行留在这里是为了兼容 `pip install -r requirements.txt` 的习惯用法。
+# 开发和测试需要 pytest。
+pytest>=8.0.0

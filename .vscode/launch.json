@@ -1,0 +1,75 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "演示：审查示例 diff（离线替身，不花钱）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["--diff", "examples/demo.patch", "--mock", "--out", "runs", "--stem", "demo"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "只看规则库（零 token 成本）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["--diff", "examples/demo.patch", "--rules-only"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "审查本地改动（git diff HEAD~1..HEAD）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["--local-diff", "HEAD~1..HEAD", "--mock", "--out", "runs"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "调用真实模型审查示例 diff",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["--diff", "examples/demo.patch", "--out", "runs", "--stem", "demo-real"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "环境自检",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "args": ["--doctor"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "评测：离线替身（规则 + 模型全链路）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/eval/run_eval.py",
+      "args": ["--mode", "mock"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    },
+    {
+      "name": "pytest：当前测试文件",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-q", "${file}"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": { "PYTHONIOENCODING": "utf-8" }
+    }
+  ]
+}

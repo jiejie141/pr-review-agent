@@ -1,0 +1,50 @@
+# --- 密钥与凭证：绝对不能提交 ---
+.env
+.env.local
+*.pem
+*.key
+credentials.json
+
+# --- 运行产物 ---
+# 保留目录占位文件，其余运行结果一律不入库
+runs/*
+!runs/.gitkeep
+out/
+*.patch.out
+review.md
+review.json
+review.comment.md
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- 编辑器 ---
+.idea/
+*.swp
+*.swo
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+*.code-workspace
+
+# --- 系统 ---
+.DS_Store
+Thumbs.db
+desktop.ini

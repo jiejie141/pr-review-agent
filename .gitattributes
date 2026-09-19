@@ -1,0 +1,23 @@
+# 统一换行符，避免 Windows 上检出后整个仓库显示为「全部改写」
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.txt   text eol=lf
+.gitignore text eol=lf
+
+# patch 文件必须保持原样：换行符被转换会导致行号错位
+*.patch -text
+
+# 二进制
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
