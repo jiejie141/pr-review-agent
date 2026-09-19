@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from pagent.config import get_settings  # noqa: E402
+from pagent.console import ensure_utf8_stdio  # noqa: E402
 from pagent.llm import LLMClient, MockLLMClient  # noqa: E402
 from pagent.reviewer import Reviewer  # noqa: E402
 from pagent.rules import RuleEngine  # noqa: E402
@@ -217,6 +218,7 @@ def print_report(results: list[dict], s: dict) -> None:
 
 
 def main() -> int:
+    ensure_utf8_stdio()
     ap = argparse.ArgumentParser(description="PR 审查 Agent 评测")
     ap.add_argument("--mode", choices=["rules", "mock", "real"], default="mock",
                     help="rules=只跑规则库；mock=规则+离线替身；real=规则+真实模型")

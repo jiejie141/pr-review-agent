@@ -17,12 +17,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from pagent.config import get_settings  # noqa: E402
+from pagent.console import ensure_utf8_stdio  # noqa: E402
 from pagent.llm import LLMClient, LLMError, estimate_tokens  # noqa: E402
 
 PROBE = "回复两个字：可用"
 
 
 def main() -> int:
+    ensure_utf8_stdio()
     ap = argparse.ArgumentParser(description="检查 LLM 配置是否可用")
     ap.add_argument("--model", help="临时覆盖模型名")
     ap.add_argument("--base-url", help="临时覆盖 Base URL")

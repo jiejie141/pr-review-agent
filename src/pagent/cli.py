@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from .config import PROJECT_ROOT, get_settings
+from .console import ensure_utf8_stdio
 from .diffparse import parse_unified_diff
 from .github import GitHubClient, GitHubError, parse_pr_ref
 from .llm import LLMClient, LLMError, MockLLMClient
@@ -267,6 +268,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    ensure_utf8_stdio()
     parser = build_parser()
     args = parser.parse_args(argv)
 
