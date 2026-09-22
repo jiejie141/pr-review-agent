@@ -393,9 +393,11 @@ class MockLLMClient:
         }
 
 
-def build_client(settings) -> Any:
-    if settings.mock:
-        return MockLLMClient()
+def build_real_client(settings) -> LLMClient:
+    """按 settings 构造真实客户端（唯一的构造点）。
+
+    之前 reviewer.review_diff_text 里也有一份逐字段的构造代码，
+    两处各写一遍，新增配置项（超时、温度……）时必然只改一处（2026-09-22 审查）。"""
     return LLMClient(
         api_key=settings.llm_api_key,
         base_url=settings.llm_base_url,
@@ -404,3 +406,9 @@ def build_client(settings) -> Any:
         max_retries=settings.llm_max_retries,
         temperature=settings.llm_temperature,
     )
+
+
+def build_client(settings) -> Any:
+    if settings.mock:
+        return MockLLMClient()
+    return build_real_client(settings)

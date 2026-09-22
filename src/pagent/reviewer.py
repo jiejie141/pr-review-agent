@@ -18,7 +18,7 @@ from typing import Any
 
 from .config import Settings, get_settings
 from .diffparse import index_added_lines, parse_unified_diff
-from .llm import LLMError, LLMClient, MockLLMClient
+from .llm import LLMError, LLMClient, MockLLMClient, build_real_client  # noqa: F401
 from .models import (
     LineKind,
     Category,
@@ -447,13 +447,6 @@ def review_diff_text(
         if mock is True or (mock is None and st.mock):
             llm = MockLLMClient()
         elif st.llm_ready:
-            llm = LLMClient(
-                api_key=st.llm_api_key,
-                base_url=st.llm_base_url,
-                model=st.llm_model,
-                timeout=st.llm_timeout,
-                max_retries=st.llm_max_retries,
-                temperature=st.llm_temperature,
-            )
+            llm = build_real_client(st)
     rv = Reviewer(settings=st, llm=llm, enabled=use_llm)
     return rv.review(diff_text, pr_title=pr_title, pr_url=pr_url)

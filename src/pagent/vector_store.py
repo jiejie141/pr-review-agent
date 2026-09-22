@@ -250,8 +250,13 @@ class ChromaVectorRetriever:
                 where={"instance": self.instance_id},
                 include=["distances"],
             )
-        except Exception:
+        except Exception as exc:
+            # 不能静默返回 []：纯 vector 模式下这就是"规范检索整个没了"，
+            # 而报告里什么都看不出来。记下来并暴露进 stats()，
+            # 与 HybridRetriever.last_degraded 保持同一口径（2026-09-22 审查）。
+            self.last_error = f"{type(exc).__name__}: {exc}"
             return []
+        self.last_error = ""
         ids = (res.get("ids") or [[]])[0]
         dists = (res.get("distances") or [[]])[0]
         by_id = {c.id: c for c in self.chunks}
@@ -271,13 +276,16 @@ class ChromaVectorRetriever:
         return len(self.chunks)
 
     def stats(self) -> dict:
-        return {
+        d = {
             "chunks": len(self.chunks),
             "backend": "chroma",
             "embedder": self.embedder.name,
             "dim": self.embedder.dim,
             "sources": sorted({c.source for c in self.chunks}),
         }
+        if getattr(self, "last_error", ""):
+            d["last_error"] = self.last_error
+        return d
 
 
 class HybridRetriever:

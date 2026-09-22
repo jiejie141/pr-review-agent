@@ -1,6 +1,6 @@
 """仓库规范检索测试。"""
 
-from pagent.retrieval import ConventionStore, build_store, tokenize
+from pagent.retrieval import ConventionStore, build_bm25_store, tokenize
 
 DOC = """# 后端代码规范
 
@@ -116,14 +116,14 @@ def test_build_store_from_real_files():
     root = __import__("pathlib").Path(__file__).resolve().parents[1]
     paths = sorted((root / "examples" / "conventions").glob("*.md"))
     assert paths, "examples/conventions 下应有规范文档"
-    store = build_store([str(p) for p in paths])
+    store = build_bm25_store([str(p) for p in paths])
     assert len(store) > 10
     hits = store.search("参数化查询", top_k=1)
     assert hits
 
 
 def test_build_store_ignores_missing_files():
-    store = build_store(
+    store = build_bm25_store(
         ["/definitely/not/here.md"],
         inline=["这是一段足够长的内联中文规范文本，用于确认缺失文件被安全跳过。"],
     )

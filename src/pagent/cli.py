@@ -70,15 +70,29 @@ def cmd_doctor(args) -> int:
     if args.mock:
         st.mock = True
     print(st.doctor())
-    from .retrieval import build_store
+    # 按配置的后端建索引，而不是固定 BM25 —— 上面 doctor 刚说完
+    # 「检索后端：hybrid」，这里却只统计 BM25，两处口径自相矛盾（2026-09-22 审查）。
+    from .vector_store import build_store
 
-    store = build_store(st.conventions)
+    try:
+        store = build_store(st.conventions, backend=st.retrieval_backend)
+        backend_note = ""
+    except ImportError:
+        # chromadb 没装：退回 BM25，但要把"退回了"说出来
+        store = build_store(st.conventions, backend="bm25")
+        backend_note = "（chromadb 未安装，统计退回 BM25）"
     print("")
-    print("[规范检索]")
+    print(f"[规范检索]{backend_note}")
     s = store.stats()
     print(f"  索引块数      : {s['chunks']}")
-    print(f"  词表大小      : {s['vocab']}")
-    print(f"  平均长度      : {s['avg_tokens']} tokens")
+    # 向量后端的 stats 没有 vocab / avg_tokens（它没有词表概念），缺失就不打，
+    # 不要用 KeyError 让 doctor 崩在自检路上。
+    if "vocab" in s:
+        print(f"  词表大小      : {s['vocab']}")
+    if "avg_tokens" in s:
+        print(f"  平均长度      : {s['avg_tokens']} tokens")
+    if s.get("fusion"):
+        print(f"  融合方式      : RRF（k={s.get('rrf_k')}）")
     for src in s["sources"]:
         print(f"    - {src}")
     if s["chunks"] == 0:

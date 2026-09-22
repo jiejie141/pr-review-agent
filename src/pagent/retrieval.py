@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 from typing import Iterable, Protocol
 
 _ASCII_WORD = re.compile(r"[A-Za-z0-9_]+")
-_CJK = re.compile(r"[\u4e00-\u9fff]")
 
 
 def tokenize(text: str) -> list[str]:
@@ -27,7 +26,6 @@ def tokenize(text: str) -> list[str]:
     """
     text = text.lower()
     tokens: list[str] = [m.group(0) for m in _ASCII_WORD.finditer(text)]
-    cjk = _CJK.findall(text)
     # 只保留连续中文片段内的相邻二元组
     for m in re.finditer(r"[\u4e00-\u9fff]+", text):
         seg = m.group(0)
@@ -35,8 +33,6 @@ def tokenize(text: str) -> list[str]:
             tokens.append(seg)
         else:
             tokens.extend(seg[i : i + 2] for i in range(len(seg) - 1))
-    if not cjk:
-        pass
     return tokens
 
 
@@ -196,7 +192,13 @@ class ConventionStore:
         }
 
 
-def build_store(paths: Iterable[str] = (), inline: Iterable[str] = ()) -> ConventionStore:
+def build_bm25_store(paths: Iterable[str] = (), inline: Iterable[str] = ()) -> ConventionStore:
+    """构造纯 BM25 检索器。
+
+    ⚠️ 这个名字**曾经叫 build_store**，与 vector_store.build_store（带
+    backend 参数的那个）同名不同签名 —— 两处各存一份，import 时极易拿错
+    （reviewer 能跑对全靠"从 vector_store 拿"这个约定）。2026-09-22
+    审查后改名，构造入口统一收在 vector_store.build_store。"""
     store = ConventionStore()
     for t in inline:
         store.add_text(t, source="inline")
