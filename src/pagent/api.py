@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal
 
@@ -243,7 +244,11 @@ def review(req: ReviewRequest) -> ReviewOut:
             raise HTTPException(
                 400, f"未知检索后端 {req.retrieval_backend}（可选 bm25 / vector / hybrid）"
             )
-        st.retrieval_backend = req.retrieval_backend
+        # ⚠️ 不能写成 st.retrieval_backend = ...：st 是 get_settings() 的
+        # 全局单例，直接改会把这次请求的覆盖**泄漏给后续所有请求**
+        # （/health 的显示也会被带走），并发请求还会互相踩。
+        # 用 replace 复制一份再改，单例保持不动。
+        st = replace(st, retrieval_backend=req.retrieval_backend)
 
     mode = req.resolve_mode()
     if mode == "live" and not st.llm_ready:

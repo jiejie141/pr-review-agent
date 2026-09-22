@@ -112,6 +112,28 @@ def test_rrf_fusion_combines_both_rankings():
     assert hits[0].score > 1.0 / (60 + 4)
 
 
+def test_hybrid_fusion_dedupes_same_document():
+    """同一篇规范在 BM25 侧（id 为 source#N）与向量侧（id 为 instance#N）
+    的 chunk.id 永不相等，融合必须按内容去重。
+
+    钉住 2026-09-22 实测发现的 bug：按 chunk.id 融合时，同一文档会以
+    两个 id 各占一个 top_k 名额、在 prompt 里重复出现，且两路互证
+    （RRF 的核心价值）永不发生。上面的 test_rrf_fusion_combines_both_rankings
+    没拦住它：单路 rank0 的 1/(k+1) 就已超过该断言的阈值。
+    """
+    sparse = ConventionStore()
+    sparse.add_text(CONVENTIONS)
+    dense = ChromaVectorRetriever()
+    dense.add_text(CONVENTIONS)
+
+    hy = HybridRetriever(sparse=sparse, dense=dense)
+    hits = hy.search("sql injection", top_k=6)
+    texts = [h.chunk.text for h in hits]
+    assert len(texts) == len(set(texts)), "同一篇文档不应在融合结果里重复出现"
+    # 两路都召回的同一文档应拿到两路分数叠加，严格高于单路 rank0 的 1/(k+1)
+    assert hits[0].score > 1.0 / (hy.rrf_k + 1)
+
+
 def test_hybrid_degrades_when_dense_fails():
     """向量侧抛异常时应降级为纯 BM25，而不是让整次审查失败。"""
 

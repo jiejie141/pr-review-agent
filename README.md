@@ -84,7 +84,7 @@ python main.py --pr owner/repo#42 --post --apply   # 真正回评
 【负数误报】0 条意见 / 5 个干净用例（0 个用例被误报）
 【锚定有效率】13/13 = 100%（被丢弃的都是行号不存在的幻觉）
 【语义缺陷命中率】1/1 = 100%（规则抓不到、只能靠模型理解的缺陷）
-【单元测试】314 项全通过
+【单元测试】352 项全通过
 ```
 
 **必须说明的局限性**：留出集只有 2 个用例，样本量太小，100% 不具备统计意义。
@@ -116,7 +116,7 @@ pr-review-agent/
 │   ├── mcp.py                  自研 MCP stdio 客户端（JSON-RPC 2.0 全套握手）
 │   ├── report.py               Markdown / JSON / PR 评论 / 终端四种输出
 │   └── cli.py                  命令行入口
-├── tests/                      314 项单元测试
+├── tests/                      352 项单元测试
 ├── eval/
 │   ├── build_corpus.py         生成标注语料（difflib，不依赖 git）
 │   ├── corpus/*.patch          22 个标注用例

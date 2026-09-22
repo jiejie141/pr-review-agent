@@ -318,16 +318,22 @@ class HybridRetriever:
             except Exception as exc:  # 降级而不是崩
                 self.last_degraded = f"{type(exc).__name__}: {exc}"
 
-        fused: dict[str, float] = {}
-        by_id: dict[str, Chunk] = {}
+        # ⚠️ 融合键必须按**内容**，不能按 chunk.id：
+        # BM25 侧的 id 是 `{source}#N`、向量侧是 `{instance_id}#N`，
+        # 同一篇文档在两个 store 里的 id 永不相等 —— 按 id 融合，
+        # 两路互证永远不会发生，同一文档还会以两个 id 各占一个
+        # top_k 名额、在 prompt 里重复出现（2026-09-22 实测复现）。
+        # (source, heading, text) 三元组才能唯一标识「同一篇规范」。
+        fused: dict[tuple[str, str, str], float] = {}
+        by_key: dict[tuple[str, str, str], Chunk] = {}
         for hits, weight in rankings:
             for rank, h in enumerate(hits):
-                cid = h.chunk.id
-                by_id[cid] = h.chunk
-                fused[cid] = fused.get(cid, 0.0) + weight / (self.rrf_k + rank + 1)
+                key = (h.chunk.source, h.chunk.heading, h.chunk.text)
+                by_key.setdefault(key, h.chunk)
+                fused[key] = fused.get(key, 0.0) + weight / (self.rrf_k + rank + 1)
 
         ranked = sorted(fused.items(), key=lambda kv: -kv[1])[:top_k]
-        return [ScoredChunk(chunk=by_id[cid], score=round(s, 8)) for cid, s in ranked]
+        return [ScoredChunk(chunk=by_key[k], score=round(s, 8)) for k, s in ranked]
 
     def render_context(self, query: str, top_k: int = 3, limit: int = 1200) -> str:
         return _render(self.search(query, top_k=top_k), limit)

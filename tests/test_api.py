@@ -119,6 +119,27 @@ def test_review_works_on_every_backend(client, backend):
     assert r.json()["findings"], backend
 
 
+def test_backend_override_does_not_leak_to_global_settings(client):
+    """按请求覆盖检索后端，不得污染 get_settings() 单例。
+
+    钉住 2026-09-22 审查发现的问题：旧实现直接给单例字段赋值，
+    一次 retrieval_backend=hybrid 会把后续所有请求和 /health 的
+    显示一起带走。
+    """
+    from pagent.config import get_settings
+
+    before = get_settings().retrieval_backend
+    r = client.post(
+        "/review",
+        json={"diff": DEMO_DIFF, "mock": True,
+              "retrieval_backend": "hybrid" if before != "hybrid" else "bm25"},
+    )
+    assert r.status_code == 200, r.text
+    assert get_settings().retrieval_backend == before
+    h = client.get("/health")
+    assert h.json()["retrieval_backend"] == before
+
+
 def test_review_stats_populated(client):
     r = client.post("/review", json={"diff": DEMO_DIFF, "mock": True})
     st = r.json()["stats"]
